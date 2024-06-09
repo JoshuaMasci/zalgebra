@@ -254,6 +254,11 @@ pub fn GenericVector(comptime dimensions: comptime_int, comptime T: type) type {
             return .{ .data = result };
         }
 
+        /// Construct new vector from array.
+        pub fn fromArray(array: [dimensions]T) Self {
+            return .{ .data = array };
+        }
+
         /// Transform vector to array.
         pub fn toArray(self: Self) [dimensions]T {
             return self.data;
