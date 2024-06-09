@@ -135,6 +135,7 @@ Note: All matrices are column-major.
 | mul               | Construct quaternion resulting from the multiplication of two given ones                       |
 | scale             | Construct new quaternion resulting from the multiplication of all components by a given scalar |
 | dot               | Return the dot product between two quaternions                                                 |
+| toArray           | Return an array of [w,x,y,z]                                                                   |
 | toMat4            | Convert given quat to rotation 4x4 matrix                                                      |
 | fromEulerAngles   | Construct quaternion from Euler angles                                                         |
 | fromAxis          | Construct quat from angle around specified axis                                                |

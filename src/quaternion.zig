@@ -142,6 +142,11 @@ pub fn Quaternion(comptime T: type) type {
             return (left.x * right.x) + (left.y * right.y) + (left.z * right.z) + (left.w * right.w);
         }
 
+        /// Convert given quaternion to an array of [w,x,y,z]
+        pub fn toArray(self: Self) [4]T {
+            return .{ self.w, self.x, self.y, self.z };
+        }
+
         /// Convert given quaternion to rotation 3x3 matrix.
         fn toMat3(self: Self) Mat3x3(T) {
             var result: Mat3x3(T) = undefined;
