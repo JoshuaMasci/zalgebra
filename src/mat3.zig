@@ -28,23 +28,19 @@ pub fn Mat3x3(comptime T: type) type {
     return extern struct {
         data: [3][3]T,
 
-        const Self = @This();
+        /// Shorthand for matrix with all zeros.
+        pub const ZERO = Self.set(0);
 
         /// Shorthand for identity matrix.
-        pub fn identity() Self {
-            return .{
-                .data = .{
-                    .{ 1, 0, 0 },
-                    .{ 0, 1, 0 },
-                    .{ 0, 0, 1 },
-                },
-            };
-        }
+        pub const IDENTITY: Self = .{
+            .data = .{
+                .{ 1, 0, 0 },
+                .{ 0, 1, 0 },
+                .{ 0, 0, 1 },
+            },
+        };
 
-        /// Shorthand for matrix with all zeros.
-        pub fn zero() Self {
-            return Self.set(0);
-        }
+        const Self = @This();
 
         /// Set all mat3 values to given value.
         pub fn set(value: T) Self {
@@ -105,7 +101,7 @@ pub fn Mat3x3(comptime T: type) type {
 
         /// Construct a 3x3 matrix from given axis and angle (in degrees).
         pub fn fromRotation(angle_in_degrees: T, axis: Vector3) Self {
-            var result = Self.identity();
+            var result = Self.IDENTITY;
 
             const norm_axis = axis.norm();
 
@@ -140,9 +136,9 @@ pub fn Mat3x3(comptime T: type) type {
         /// Construct a rotation matrix from euler angles (X * Y * Z).
         /// Order matters because matrix multiplication are NOT commutative.
         pub fn fromEulerAngles(euler_angle: Vector3) Self {
-            const x = Self.fromRotation(euler_angle.x(), Vector3.right());
-            const y = Self.fromRotation(euler_angle.y(), Vector3.up());
-            const z = Self.fromRotation(euler_angle.z(), Vector3.forward());
+            const x = Self.fromRotation(euler_angle.x(), Vector3.X);
+            const y = Self.fromRotation(euler_angle.y(), Vector3.Y);
+            const z = Self.fromRotation(euler_angle.z(), Vector3.Z);
 
             return z.mul(y.mul(x));
         }
@@ -187,7 +183,7 @@ pub fn Mat3x3(comptime T: type) type {
         }
 
         pub fn fromScale(axis: Vector3) Self {
-            var result = Self.identity();
+            var result = Self.IDENTITY;
 
             result.data[0][0] = axis.x();
             result.data[1][1] = axis.y();
@@ -212,7 +208,7 @@ pub fn Mat3x3(comptime T: type) type {
         /// Matrices' multiplication.
         /// Produce a new matrix from given two matrices.
         pub fn mul(left: Self, right: Self) Self {
-            var result = Self.identity();
+            var result = Self.IDENTITY;
             for (0..result.data.len) |column| {
                 for (0..result.data[column].len) |row| {
                     var sum: T = 0;
@@ -303,9 +299,9 @@ pub fn Mat3x3(comptime T: type) type {
 }
 
 test "zalgebra.Mat3.eql" {
-    const a = Mat3.identity();
-    const b = Mat3.identity();
-    const c = Mat3.zero();
+    const a = Mat3.IDENTITY;
+    const b = Mat3.IDENTITY;
+    const c = Mat3.ZERO;
 
     try expectEqual(Mat3.eql(a, b), true);
     try expectEqual(Mat3.eql(a, c), false);
@@ -366,7 +362,7 @@ test "zalgebra.Mat3.fromSlice" {
     const data = [_]f32{ 1, 0, 0, 0, 1, 0, 0, 0, 1 };
     const result = Mat3.fromSlice(&data);
 
-    try expectEqual(result, Mat3.identity());
+    try expectEqual(result, Mat3.IDENTITY);
 }
 
 test "zalgebra.Mat3.fromScale" {

@@ -1,15 +1,12 @@
 # zalgebra
 
-![CI](https://github.com/kooparse/zalgebra/workflows/CI/badge.svg)
-<br/>
-<br/>
 Linear algebra library for games and computer graphics.
 
 The goal is to become as complete and useful as the Unity one. I'm currently using it for my projects and will continue to update it as new needs are coming.
 
 If you would like to contribute, don't hesitate! :)
 
-Note: **Zig 0.11.x is required.**
+Note: **Zig 0.12 is required.**
 
 ## Examples
 
@@ -72,14 +69,6 @@ pub fn main () void {
 | negate    | Scale all components by -1                                                 |
 | cast      | Cast a type to another type                                                |
 | fromSlice | Construct new vectors from slice                                           |
-| zero      | Shorthand for `(0, 0, 0)`                                                  |
-| one       | Shorthand for `(1, 1, 1)`                                                  |
-| up        | Shorthand for `(0, 1, 0)`                                                  |
-| down      | Shorthand for `(0, -1, 0)`                                                 |
-| right     | Shorthand for `(1, 0, 0)`                                                  |
-| left      | Shorthand for `(-1, 0, 0)`                                                 |
-| forward   | Shorthand for `(0, 0, 1)` (only for vec3 and vec4)                         |
-| back      | Shorthand for `(0, 0, -1)` (only for vec3 and vec4)                        |
 | toArray   | Return an array of same size.                                              |
 | getAngle  | Return angle in degrees between two vectors (only for vec2 and vec3)       |
 | rotate    | Rotate vector by angle (in degrees)                                        |
@@ -103,7 +92,6 @@ Note: All matrices are column-major.
 
 | Methods            | Description                                                                           |
 | ------------------ | ------------------------------------------------------------------------------------- |
-| identity           | Construct an identity matrix                                                          |
 | set                | Set all matrix values to given value                                                  |
 | fromSlice          | Construct new matrix from given slice of data                                         |
 | getData            | Return a pointer to the inner data                                                    |
@@ -123,10 +111,6 @@ Note: All matrices are column-major.
 | orthoNormalize     | Ortho normalize the given matrix.                                                     |
 | extractEulerAngles | Return a vector with Euler angles in degrees (pitch/yaw/roll)                         |
 | extractScale       | Return a vector with proper scale                                                     |
-| perspective        | Construct a perspective matrix from given fovy, aspect ratio, near/far inputs         |
-| perspectiveReversedZ | Construct a perspective matrix with reverse Z and infinite far plane.               |
-| orthographic       | Construct an orthographic matrix from given left, right, bottom, top, near/far inputs |
-| lookAt             | Construct a right-handed lookAt matrix from given position (eye) and target           |
 | mul                | Multiply two matrices                                                                 |
 | inv                | Inverse the given matrix                                                              |
 | recompose          | Return mat4 matrix from given `translation`, `rotation` and `scale` components        |
@@ -138,7 +122,6 @@ Note: All matrices are column-major.
 | Methods           | Description                                                                                    |
 | ----------------- | ---------------------------------------------------------------------------------------------- |
 | new               | Construct new quat from given floats                                                           |
-| identity          | Construct quat as `(1, 0, 0, 0)`                                                               |
 | set               | Set all components to the same given value                                                     |
 | cast              | Cast a type to another type                                                                    |
 | fromSlice         | Construct new quaternion from slice                                                            |

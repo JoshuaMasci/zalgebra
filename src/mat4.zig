@@ -15,10 +15,6 @@ const Quat = quat.Quat;
 
 pub const Mat4 = Mat4x4(f32);
 pub const Mat4_f64 = Mat4x4(f64);
-pub const perspective = Mat4.perspective;
-pub const perspectiveReversedZ = Mat4.perspectiveReversedZ;
-pub const orthographic = Mat4.orthographic;
-pub const lookAt = Mat4.lookAt;
 
 /// A column-major 4x4 matrix
 /// Note: Column-major means accessing data like m.data[COLUMN][ROW].
@@ -33,24 +29,20 @@ pub fn Mat4x4(comptime T: type) type {
     return extern struct {
         data: [4][4]T,
 
-        const Self = @This();
+        /// Shorthand for matrix with all zeros.
+        pub const ZERO = Self.set(0);
 
         /// Shorthand for identity matrix.
-        pub fn identity() Self {
-            return .{
-                .data = .{
-                    .{ 1, 0, 0, 0 },
-                    .{ 0, 1, 0, 0 },
-                    .{ 0, 0, 1, 0 },
-                    .{ 0, 0, 0, 1 },
-                },
-            };
-        }
+        pub const IDENTITY: Self = .{
+            .data = .{
+                .{ 1, 0, 0, 0 },
+                .{ 0, 1, 0, 0 },
+                .{ 0, 0, 1, 0 },
+                .{ 0, 0, 0, 1 },
+            },
+        };
 
-        /// Shorthand for matrix with all zeros.
-        pub fn zero() Self {
-            return Self.set(0);
-        }
+        const Self = @This();
 
         /// Set all mat4 values to given value.
         pub fn set(value: T) Self {
@@ -114,7 +106,7 @@ pub fn Mat4x4(comptime T: type) type {
         /// Construct 4x4 translation matrix by multiplying identity matrix and
         /// given translation vector.
         pub fn fromTranslate(axis: Vector3) Self {
-            var result = Self.identity();
+            var result = Self.IDENTITY;
             result.data[3][0] = axis.data[0];
             result.data[3][1] = axis.data[1];
             result.data[3][2] = axis.data[2];
@@ -135,7 +127,7 @@ pub fn Mat4x4(comptime T: type) type {
 
         /// Construct a 4x4 matrix from given axis and angle (in degrees).
         pub fn fromRotation(angle_in_degrees: T, axis: Vector3) Self {
-            var result = Self.identity();
+            var result = Self.IDENTITY;
 
             const norm_axis = axis.norm();
 
@@ -170,9 +162,9 @@ pub fn Mat4x4(comptime T: type) type {
         /// Construct a rotation matrix from euler angles (X * Y * Z).
         /// Order matters because matrix multiplication are NOT commutative.
         pub fn fromEulerAngles(euler_angle: Vector3) Self {
-            const x = Self.fromRotation(euler_angle.x(), Vector3.right());
-            const y = Self.fromRotation(euler_angle.y(), Vector3.up());
-            const z = Self.fromRotation(euler_angle.z(), Vector3.forward());
+            const x = Self.fromRotation(euler_angle.x(), Vector3.X);
+            const y = Self.fromRotation(euler_angle.y(), Vector3.Y);
+            const z = Self.fromRotation(euler_angle.z(), Vector3.Z);
 
             return z.mul(y.mul(x));
         }
@@ -217,7 +209,7 @@ pub fn Mat4x4(comptime T: type) type {
         }
 
         pub fn fromScale(axis: Vector3) Self {
-            var result = Self.identity();
+            var result = Self.IDENTITY;
 
             result.data[0][0] = axis.x();
             result.data[1][1] = axis.y();
@@ -239,93 +231,147 @@ pub fn Mat4x4(comptime T: type) type {
             return Vector3.new(scale_x.length(), scale_y.length(), scale_z.length());
         }
 
-        /// Construct a perspective 4x4 matrix.
-        /// Note: Field of view is given in degrees.
-        /// Also for more details https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluPerspective.xml.
-        pub fn perspective(fovy_in_degrees: T, aspect_ratio: T, z_near: T, z_far: T) Self {
-            var result = Self.identity();
+        /// Matrix Functions for RightHanded
+        pub const RightHanded = struct {
+            /// Right-handed lookAt function.
+            pub fn lookAt(eye: Vector3, target: Vector3, up: Vector3) Self {
+                const f = Vector3.sub(target, eye).norm();
+                const s = Vector3.cross(f, up).norm();
+                const u = Vector3.cross(s, f);
 
-            const f = 1 / @tan(root.toRadians(fovy_in_degrees) * 0.5);
+                var result: Self = undefined;
+                result.data[0][0] = s.x();
+                result.data[0][1] = u.x();
+                result.data[0][2] = -f.x();
+                result.data[0][3] = 0;
 
-            result.data[0][0] = f / aspect_ratio;
-            result.data[1][1] = f;
-            result.data[2][2] = (z_near + z_far) / (z_near - z_far);
-            result.data[2][3] = -1;
-            result.data[3][2] = 2 * z_far * z_near / (z_near - z_far);
-            result.data[3][3] = 0;
+                result.data[1][0] = s.y();
+                result.data[1][1] = u.y();
+                result.data[1][2] = -f.y();
+                result.data[1][3] = 0;
 
-            return result;
-        }
+                result.data[2][0] = s.z();
+                result.data[2][1] = u.z();
+                result.data[2][2] = -f.z();
+                result.data[2][3] = 0;
 
-        /// Construct a perspective 4x4 matrix with reverse Z and infinite far plane.
-        /// Note: Field of view is given in degrees.
-        /// Also for more details https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluPerspective.xml.
-        /// For Reversed-Z details https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/
-        pub fn perspectiveReversedZ(fovy_in_degrees: T, aspect_ratio: T, z_near: T) Self {
-            var result = Self.identity();
+                result.data[3][0] = -Vector3.dot(s, eye);
+                result.data[3][1] = -Vector3.dot(u, eye);
+                result.data[3][2] = Vector3.dot(f, eye);
+                result.data[3][3] = 1;
 
-            const f = 1 / @tan(root.toRadians(fovy_in_degrees) * 0.5);
+                return result;
+            }
 
-            result.data[0][0] = f / aspect_ratio;
-            result.data[1][1] = f;
-            result.data[2][2] = 0;
-            result.data[2][3] = -1;
-            result.data[3][2] = z_near;
-            result.data[3][3] = 0;
+            pub const Gl = struct {
+                /// Construct a perspective 4x4 matrix.
+                /// Note: Field of view is given in degrees.
+                /// Also for more details https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluPerspective.xml.
+                pub fn perspective(fovy_in_degrees: T, aspect_ratio: T, z_near: T, z_far: T) Self {
+                    var result = Self.IDENTITY;
 
-            return result;
-        }
+                    const f = 1 / @tan(root.toRadians(fovy_in_degrees) * 0.5);
 
-        /// Construct an orthographic 4x4 matrix.
-        pub fn orthographic(left: T, right: T, bottom: T, top: T, z_near: T, z_far: T) Self {
-            var result = Self.zero();
+                    result.data[0][0] = f / aspect_ratio;
+                    result.data[1][1] = f;
+                    result.data[2][2] = (z_near + z_far) / (z_near - z_far);
+                    result.data[2][3] = -1;
+                    result.data[3][2] = 2 * z_far * z_near / (z_near - z_far);
+                    result.data[3][3] = 0;
 
-            result.data[0][0] = 2 / (right - left);
-            result.data[1][1] = 2 / (top - bottom);
-            result.data[2][2] = 2 / (z_near - z_far);
-            result.data[3][3] = 1;
+                    return result;
+                }
 
-            result.data[3][0] = (left + right) / (left - right);
-            result.data[3][1] = (bottom + top) / (bottom - top);
-            result.data[3][2] = (z_far + z_near) / (z_near - z_far);
+                /// Construct a perspective 4x4 matrix with reverse Z and infinite far plane.
+                /// Note: Field of view is given in degrees.
+                /// Also for more details https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluPerspective.xml.
+                /// For Reversed-Z details https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/
+                pub fn perspectiveReversedZ(fovy_in_degrees: T, aspect_ratio: T, z_near: T) Self {
+                    var result = Self.IDENTITY;
 
-            return result;
-        }
+                    const f = 1 / @tan(root.toRadians(fovy_in_degrees) * 0.5);
 
-        /// Right-handed lookAt function.
-        pub fn lookAt(eye: Vector3, target: Vector3, up: Vector3) Self {
-            const f = Vector3.sub(target, eye).norm();
-            const s = Vector3.cross(f, up).norm();
-            const u = Vector3.cross(s, f);
+                    result.data[0][0] = f / aspect_ratio;
+                    result.data[1][1] = f;
+                    result.data[2][2] = 0;
+                    result.data[2][3] = -1;
+                    result.data[3][2] = z_near;
+                    result.data[3][3] = 0;
 
-            var result: Self = undefined;
-            result.data[0][0] = s.x();
-            result.data[0][1] = u.x();
-            result.data[0][2] = -f.x();
-            result.data[0][3] = 0;
+                    return result;
+                }
 
-            result.data[1][0] = s.y();
-            result.data[1][1] = u.y();
-            result.data[1][2] = -f.y();
-            result.data[1][3] = 0;
+                /// Construct an orthographic 4x4 matrix.
+                pub fn orthographic(left: T, right: T, bottom: T, top: T, z_near: T, z_far: T) Self {
+                    var result = Self.zero();
 
-            result.data[2][0] = s.z();
-            result.data[2][1] = u.z();
-            result.data[2][2] = -f.z();
-            result.data[2][3] = 0;
+                    result.data[0][0] = 2 / (right - left);
+                    result.data[1][1] = 2 / (top - bottom);
+                    result.data[2][2] = 2 / (z_near - z_far);
+                    result.data[3][3] = 1;
 
-            result.data[3][0] = -Vector3.dot(s, eye);
-            result.data[3][1] = -Vector3.dot(u, eye);
-            result.data[3][2] = Vector3.dot(f, eye);
-            result.data[3][3] = 1;
+                    result.data[3][0] = (left + right) / (left - right);
+                    result.data[3][1] = (bottom + top) / (bottom - top);
+                    result.data[3][2] = (z_far + z_near) / (z_near - z_far);
 
-            return result;
-        }
+                    return result;
+                }
+            };
+        };
+
+        pub const LeftHanded = struct {
+            /// Left-handed lookAt function.
+            pub fn lookAtLh(eye: Vector3, target: Vector3, up: Vector3) Self {
+                const f = Vector3.sub(target, eye).norm();
+                const s = Vector3.cross(up, f).norm();
+                const u = Vector3.cross(f, s);
+
+                var result: Self = undefined;
+                result.data[0][0] = s.x();
+                result.data[0][1] = u.x();
+                result.data[0][2] = f.x();
+                result.data[0][3] = 0;
+
+                result.data[1][0] = s.y();
+                result.data[1][1] = u.y();
+                result.data[1][2] = f.y();
+                result.data[1][3] = 0;
+
+                result.data[2][0] = s.z();
+                result.data[2][1] = u.z();
+                result.data[2][2] = f.z();
+                result.data[2][3] = 0;
+
+                result.data[3][0] = -Vector3.dot(s, eye);
+                result.data[3][1] = -Vector3.dot(u, eye);
+                result.data[3][2] = -Vector3.dot(f, eye);
+                result.data[3][3] = 1;
+
+                return result;
+            }
+
+            pub const Gl = struct {
+                pub fn perspective(fovy_in_degrees: T, aspect_ratio: T, z_near: T, z_far: T) Self {
+                    var result = Self.IDENTITY;
+
+                    const f = 1 / @tan(root.toRadians(fovy_in_degrees) * 0.5);
+
+                    result.data[0][0] = f / aspect_ratio;
+                    result.data[1][1] = f;
+                    result.data[2][2] = -(z_near + z_far) / (z_near - z_far);
+                    result.data[2][3] = 1;
+                    result.data[3][2] = 2 * z_far * z_near / (z_near - z_far);
+                    result.data[3][3] = 0;
+
+                    return result;
+                }
+            };
+        };
 
         /// Matrices' multiplication.
         /// Produce a new matrix from given two matrices.
         pub fn mul(left: Self, right: Self) Self {
-            var result = Self.identity();
+            var result = Self.IDENTITY;
             for (0..result.data.len) |column| {
                 for (0..result.data[column].len) |row| {
                     var sum: T = 0;
@@ -494,9 +540,9 @@ pub fn Mat4x4(comptime T: type) type {
 }
 
 test "zalgebra.Mat4.eql" {
-    const a = Mat4.identity();
-    const b = Mat4.identity();
-    const c = Mat4.zero();
+    const a = Mat4.IDENTITY;
+    const b = Mat4.IDENTITY;
+    const c = Mat4.ZERO;
 
     try expectEqual(Mat4.eql(a, b), true);
     try expectEqual(Mat4.eql(a, c), false);
@@ -562,7 +608,7 @@ test "zalgebra.Mat4.fromSlice" {
     const data = [_]f32{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
     const result = Mat4.fromSlice(&data);
 
-    try expectEqual(result, Mat4.identity());
+    try expectEqual(result, Mat4.IDENTITY);
 }
 
 test "zalgebra.Mat4.fromTranslate" {
@@ -675,7 +721,7 @@ test "zalgebra.Mat4.recompose" {
     const result = Mat4.recompose(
         Vec3.set(2),
         Vec3.new(45, 5, 0),
-        Vec3.one(),
+        Vec3.ONE,
     );
 
     try expectEqual(result, Mat4{ .data = .{

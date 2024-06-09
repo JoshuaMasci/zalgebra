@@ -38,6 +38,9 @@ pub fn Quaternion(comptime T: type) type {
 
         const Self = @This();
 
+        /// Shorthand for (1, 0, 0, 0).
+        pub const IDENTITY = Self.new(1, 0, 0, 0);
+
         /// Construct new quaternion from floats.
         pub fn new(w: T, x: T, y: T, z: T) Self {
             return .{
@@ -46,11 +49,6 @@ pub fn Quaternion(comptime T: type) type {
                 .y = y,
                 .z = z,
             };
-        }
-
-        /// Shorthand for (1, 0, 0, 0).
-        pub fn identity() Self {
-            return Self.new(1, 0, 0, 0);
         }
 
         /// Set all components to the same given value.
@@ -262,9 +260,9 @@ pub fn Quaternion(comptime T: type) type {
 
         /// Convert all Euler angles (in degrees) to quaternion.
         pub fn fromEulerAngles(axis_in_degrees: Vector3) Self {
-            const x = Self.fromAxis(axis_in_degrees.x(), Vector3.right());
-            const y = Self.fromAxis(axis_in_degrees.y(), Vector3.up());
-            const z = Self.fromAxis(axis_in_degrees.z(), Vector3.forward());
+            const x = Self.fromAxis(axis_in_degrees.x(), Vector3.X);
+            const y = Self.fromAxis(axis_in_degrees.y(), Vector3.Y);
+            const z = Self.fromAxis(axis_in_degrees.z(), Vector3.Z);
 
             return z.mul(y.mul(x));
         }
@@ -303,7 +301,7 @@ pub fn Quaternion(comptime T: type) type {
             var copy = self;
             if (@abs(copy.w) > 1) copy = copy.norm();
 
-            var res_axis = Vector3.zero();
+            var res_axis = Vector3.ZERO;
             const res_angle: T = 2 * math.acos(copy.w);
             const den: T = @sqrt(1 - copy.w * copy.w);
 
@@ -456,7 +454,7 @@ test "zalgebra.Quaternion.fromEulerAngles" {
 }
 
 test "zalgebra.Quaternion.fromAxis" {
-    const q = Quat.fromAxis(45, Vec3.up());
+    const q = Quat.fromAxis(45, Vec3.Y);
     const res_q = q.extractEulerAngles();
 
     try expectEqual(res_q, Vec3.new(0, 45.0000076, 0));
@@ -485,7 +483,7 @@ test "zalgebra.Quaternion.rotateVec" {
     const q = Quat.fromEulerAngles(Vec3.set(45));
     const m = q.toMat4();
 
-    const v = Vec3.up();
+    const v = Vec3.Y;
     const v1 = q.rotateVec(v);
     const v2 = m.mulByVec4(Vec4.new(v.x(), v.y(), v.z(), 1));
 
@@ -499,8 +497,8 @@ test "zalgebra.Quaternion.rotateVec" {
 }
 
 test "zalgebra.Quaternion.lerp" {
-    const a = Quat.identity();
-    const b = Quat.fromAxis(180, Vec3.up());
+    const a = Quat.IDENTITY;
+    const b = Quat.fromAxis(180, Vec3.Y);
     try expectEqual(Quat.lerp(a, b, 1), b);
     const c = Quat.lerp(a, b, 0.5);
     const d = Quat.new(0.5, 0, 0.5, 0);
@@ -511,8 +509,8 @@ test "zalgebra.Quaternion.lerp" {
 }
 
 test "zalgebra.Quaternion.slerp" {
-    const a = Quat.identity();
-    const b = Quat.fromAxis(180, Vec3.up());
+    const a = Quat.IDENTITY;
+    const b = Quat.fromAxis(180, Vec3.Y);
     try expectEqual(Quat.slerp(a, b, 1), Quat.new(7.54979012e-08, 0, -1, 0));
     const c = Quat.slerp(a, b, 0.5);
     const d = Quat.new(1, 0, -1, 0).norm();
