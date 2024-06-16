@@ -142,14 +142,14 @@ pub fn Quaternion(comptime T: type) type {
             return (left.x * right.x) + (left.y * right.y) + (left.z * right.z) + (left.w * right.w);
         }
 
-        /// Construct new quaternion from array of [w,x,y,z].
+        /// Construct new quaternion from array of [x,y,z,w].
         pub fn fromArray(array: [4]T) Self {
-            return .{ .w = array[0], .x = array[1], .y = array[2], .z = array[3] };
+            return .{ .x = array[0], .y = array[1], .z = array[2], .w = array[3] };
         }
 
-        /// Convert given quaternion to an array of [w,x,y,z]
+        /// Convert given quaternion to an array of [x,y,z,w]
         pub fn toArray(self: Self) [4]T {
-            return .{ self.w, self.x, self.y, self.z };
+            return .{ self.x, self.y, self.z, self.w };
         }
 
         /// Convert given quaternion to rotation 3x3 matrix.
