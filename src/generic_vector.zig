@@ -50,10 +50,10 @@ pub fn GenericVector(comptime dimensions: comptime_int, comptime T: type) type {
                     return .{ .data = [2]T{ vx, vy } };
                 }
 
-                /// Rotate vector by angle (in degrees)
-                pub fn rotate(self: Self, angle_in_degrees: T) Self {
-                    const sin_theta = @sin(root.toRadians(angle_in_degrees));
-                    const cos_theta = @cos(root.toRadians(angle_in_degrees));
+                /// Rotate vector by angle (in radians)
+                pub fn rotate(self: Self, angle_in_radians: T) Self {
+                    const sin_theta = @sin(angle_in_radians);
+                    const cos_theta = @cos(angle_in_radians);
                     return .{ .data = [2]T{
                         cos_theta * self.x() - sin_theta * self.y(),
                         sin_theta * self.x() + cos_theta * self.y(),
@@ -264,10 +264,10 @@ pub fn GenericVector(comptime dimensions: comptime_int, comptime T: type) type {
             return self.data;
         }
 
-        /// Return the angle (in degrees) between two vectors.
+        /// Return the angle (in radians) between two vectors.
         pub fn getAngle(first_vector: Self, second_vector: Self) T {
             const dot_product = dot(norm(first_vector), norm(second_vector));
-            return root.toDegrees(math.acos(dot_product));
+            return math.acos(dot_product);
         }
 
         /// Return the length (magnitude) of given vector.
@@ -472,9 +472,9 @@ test "zalgebra.Vectors.getAngle" {
         const d = Vec2.ONE;
 
         try expectEqual(a.getAngle(a), 0);
-        try expectEqual(a.getAngle(b), 90);
-        try expectEqual(a.getAngle(c), 180);
-        try expectEqual(a.getAngle(d), 45);
+        try expectEqual(a.getAngle(b), 1.5707963);
+        try expectEqual(a.getAngle(c), 3.1415925);
+        try expectEqual(a.getAngle(d), 7.853982e-1);
     }
 
     // Vec3
@@ -485,9 +485,9 @@ test "zalgebra.Vectors.getAngle" {
         const d = Vec3.new(1, 1, 0);
 
         try expectEqual(a.getAngle(a), 0);
-        try expectEqual(a.getAngle(b), 90);
-        try expectEqual(a.getAngle(c), 180);
-        try expectEqual(a.getAngle(d), 45);
+        try expectEqual(a.getAngle(b), 1.5707963);
+        try expectEqual(a.getAngle(c), 3.1415925);
+        try expectEqual(a.getAngle(d), 7.853982e-1);
     }
 
     // Vec4
@@ -498,9 +498,9 @@ test "zalgebra.Vectors.getAngle" {
         const d = Vec4.new(1, 1, 0, 0);
 
         try expectEqual(a.getAngle(a), 0);
-        try expectEqual(a.getAngle(b), 90);
-        try expectEqual(a.getAngle(c), 180);
-        try expectEqual(a.getAngle(d), 45);
+        try expectEqual(a.getAngle(b), 1.5707963);
+        try expectEqual(a.getAngle(c), 3.1415925);
+        try expectEqual(a.getAngle(d), 7.853982e-1);
     }
 }
 

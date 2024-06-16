@@ -99,14 +99,14 @@ pub fn Mat3x3(comptime T: type) type {
             return Vector3.new(x, y, z);
         }
 
-        /// Construct a 3x3 matrix from given axis and angle (in degrees).
-        pub fn fromRotation(angle_in_degrees: T, axis: Vector3) Self {
+        /// Construct a 3x3 matrix from given axis and angle (in radians).
+        pub fn fromRotation(angle_in_radians: T, axis: Vector3) Self {
             var result = Self.IDENTITY;
 
             const norm_axis = axis.norm();
 
-            const sin_theta = @sin(root.toRadians(angle_in_degrees));
-            const cos_theta = @cos(root.toRadians(angle_in_degrees));
+            const sin_theta = @sin(angle_in_radians);
+            const cos_theta = @cos(angle_in_radians);
             const cos_value = 1 - cos_theta;
 
             const x = norm_axis.x();
@@ -128,8 +128,8 @@ pub fn Mat3x3(comptime T: type) type {
             return result;
         }
 
-        pub fn rotate(self: Self, angle_in_degrees: T, axis: Vector3) Self {
-            const rotation_mat = Self.fromRotation(angle_in_degrees, axis);
+        pub fn rotate(self: Self, angle_in_radians: T, axis: Vector3) Self {
+            const rotation_mat = Self.fromRotation(angle_in_radians, axis);
             return Self.mul(self, rotation_mat);
         }
 
@@ -166,7 +166,7 @@ pub fn Mat3x3(comptime T: type) type {
             return result;
         }
 
-        /// Return the rotation as Euler angles in degrees.
+        /// Return the rotation as Euler angles in angle_in_radians.
         /// Taken from Mike Day at Insomniac Games (and `glm` as the same function).
         /// For more details: https://d3cw3dd2w32x2b.cloudfront.net/wp-content/uploads/2012/07/euler-angles1.pdf
         pub fn extractEulerAngles(self: Self) Vector3 {
@@ -179,7 +179,7 @@ pub fn Mat3x3(comptime T: type) type {
             const c1 = @cos(theta_x);
             const theta_z = math.atan2(s1 * m.data[2][0] - c1 * m.data[1][0], c1 * m.data[1][1] - s1 * m.data[2][1]);
 
-            return Vector3.new(root.toDegrees(theta_x), root.toDegrees(theta_y), root.toDegrees(theta_z));
+            return Vector3.new(theta_x, theta_y, theta_z);
         }
 
         pub fn fromScale(axis: Vector3) Self {
@@ -421,8 +421,8 @@ test "zalgebra.Mat3.inv" {
 }
 
 test "zalgebra.Mat3.extractEulerAngles" {
-    const a = Mat3.fromEulerAngles(Vec3.new(45, -5, 20));
-    try expectEqual(a.extractEulerAngles(), Vec3.new(45.000003814697266, -4.99052524, 19.999998092651367));
+    const a = Mat3.fromEulerAngles(Vec3.new(math.degreesToRadians(45), math.degreesToRadians(-5), math.degreesToRadians(20)));
+    try expectEqual(a.extractEulerAngles(), Vec3.new(7.8539824e-1, -8.7101094e-2, 3.490658e-1));
 }
 
 test "zalgebra.Mat3.extractScale" {

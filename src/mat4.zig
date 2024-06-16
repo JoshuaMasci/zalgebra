@@ -125,14 +125,14 @@ pub fn Mat4x4(comptime T: type) type {
             return Vector3.new(self.data[3][0], self.data[3][1], self.data[3][2]);
         }
 
-        /// Construct a 4x4 matrix from given axis and angle (in degrees).
-        pub fn fromRotation(angle_in_degrees: T, axis: Vector3) Self {
+        /// Construct a 4x4 matrix from given axis and angle (in radians).
+        pub fn fromRotation(angle_in_radians: T, axis: Vector3) Self {
             var result = Self.IDENTITY;
 
             const norm_axis = axis.norm();
 
-            const sin_theta = @sin(root.toRadians(angle_in_degrees));
-            const cos_theta = @cos(root.toRadians(angle_in_degrees));
+            const sin_theta = @sin(angle_in_radians);
+            const cos_theta = @cos(angle_in_radians);
             const cos_value = 1 - cos_theta;
 
             const x = norm_axis.x();
@@ -154,8 +154,8 @@ pub fn Mat4x4(comptime T: type) type {
             return result;
         }
 
-        pub fn rotate(self: Self, angle_in_degrees: T, axis: Vector3) Self {
-            const rotation_mat = Self.fromRotation(angle_in_degrees, axis);
+        pub fn rotate(self: Self, angle_in_radians: T, axis: Vector3) Self {
+            const rotation_mat = Self.fromRotation(angle_in_radians, axis);
             return Self.mul(self, rotation_mat);
         }
 
@@ -192,7 +192,7 @@ pub fn Mat4x4(comptime T: type) type {
             return result;
         }
 
-        /// Return the rotation as Euler angles in degrees.
+        /// Return the rotation as Euler angles in radians.
         /// Taken from Mike Day at Insomniac Games (and `glm` as the same function).
         /// For more details: https://d3cw3dd2w32x2b.cloudfront.net/wp-content/uploads/2012/07/euler-angles1.pdf
         pub fn extractEulerAngles(self: Self) Vector3 {
@@ -205,7 +205,7 @@ pub fn Mat4x4(comptime T: type) type {
             const c1 = @cos(theta_x);
             const theta_z = math.atan2(s1 * m.data[2][0] - c1 * m.data[1][0], c1 * m.data[1][1] - s1 * m.data[2][1]);
 
-            return Vector3.new(root.toDegrees(theta_x), root.toDegrees(theta_y), root.toDegrees(theta_z));
+            return Vector3.new(theta_x, theta_y, theta_z);
         }
 
         pub fn fromScale(axis: Vector3) Self {
@@ -265,12 +265,12 @@ pub fn Mat4x4(comptime T: type) type {
 
             pub const Gl = struct {
                 /// Construct a perspective 4x4 matrix.
-                /// Note: Field of view is given in degrees.
+                /// Note: Field of view is given in radians.
                 /// Also for more details https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluPerspective.xml.
-                pub fn perspective(fovy_in_degrees: T, aspect_ratio: T, z_near: T, z_far: T) Self {
+                pub fn perspective(fovy_in_radians: T, aspect_ratio: T, z_near: T, z_far: T) Self {
                     var result = Self.IDENTITY;
 
-                    const f = 1 / @tan(root.toRadians(fovy_in_degrees) * 0.5);
+                    const f = 1 / @tan(fovy_in_radians * 0.5);
 
                     result.data[0][0] = f / aspect_ratio;
                     result.data[1][1] = f;
@@ -283,13 +283,13 @@ pub fn Mat4x4(comptime T: type) type {
                 }
 
                 /// Construct a perspective 4x4 matrix with reverse Z and infinite far plane.
-                /// Note: Field of view is given in degrees.
+                /// Note: Field of view is given in radians.
                 /// Also for more details https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluPerspective.xml.
                 /// For Reversed-Z details https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/
-                pub fn perspectiveReversedZ(fovy_in_degrees: T, aspect_ratio: T, z_near: T) Self {
+                pub fn perspectiveReversedZ(fovy_in_radians: T, aspect_ratio: T, z_near: T) Self {
                     var result = Self.IDENTITY;
 
-                    const f = 1 / @tan(root.toRadians(fovy_in_degrees) * 0.5);
+                    const f = 1 / @tan(fovy_in_radians * 0.5);
 
                     result.data[0][0] = f / aspect_ratio;
                     result.data[1][1] = f;
@@ -321,7 +321,7 @@ pub fn Mat4x4(comptime T: type) type {
 
         pub const LeftHanded = struct {
             /// Left-handed lookAt function.
-            pub fn lookAtLh(eye: Vector3, target: Vector3, up: Vector3) Self {
+            pub fn lookAt(eye: Vector3, target: Vector3, up: Vector3) Self {
                 const f = Vector3.sub(target, eye).norm();
                 const s = Vector3.cross(up, f).norm();
                 const u = Vector3.cross(f, s);
@@ -351,10 +351,10 @@ pub fn Mat4x4(comptime T: type) type {
             }
 
             pub const Gl = struct {
-                pub fn perspective(fovy_in_degrees: T, aspect_ratio: T, z_near: T, z_far: T) Self {
+                pub fn perspective(fovy_in_radians: T, aspect_ratio: T, z_near: T, z_far: T) Self {
                     var result = Self.IDENTITY;
 
-                    const f = 1 / @tan(root.toRadians(fovy_in_degrees) * 0.5);
+                    const f = 1 / @tan(fovy_in_radians * 0.5);
 
                     result.data[0][0] = f / aspect_ratio;
                     result.data[1][1] = f;
@@ -706,8 +706,8 @@ test "zalgebra.Mat4.extractTranslation" {
 }
 
 test "zalgebra.Mat4.extractEulerAngles" {
-    const a = Mat4.fromEulerAngles(Vec3.new(45, -5, 20));
-    try expectEqual(a.extractEulerAngles(), Vec3.new(45.000003814697266, -4.99052524, 19.999998092651367));
+    const a = Mat4.fromEulerAngles(Vec3.new(math.degreesToRadians(45), math.degreesToRadians(-5), math.degreesToRadians(20)));
+    try expectEqual(a.extractEulerAngles(), Vec3.new(7.8539824e-1, -8.7101094e-2, 3.490658e-1));
 }
 
 test "zalgebra.Mat4.extractScale" {
@@ -720,7 +720,7 @@ test "zalgebra.Mat4.extractScale" {
 test "zalgebra.Mat4.recompose" {
     const result = Mat4.recompose(
         Vec3.set(2),
-        Vec3.new(45, 5, 0),
+        Vec3.new(math.degreesToRadians(45), math.degreesToRadians(5), 0),
         Vec3.ONE,
     );
 
@@ -735,7 +735,7 @@ test "zalgebra.Mat4.recompose" {
 test "zalgebra.Mat4.decompose" {
     const a = Mat4.recompose(
         Vec3.new(10, 5, 5),
-        Vec3.new(45, 5, 0),
+        Vec3.new(math.degreesToRadians(45), math.degreesToRadians(5), 0.0),
         Vec3.set(1),
     );
 
@@ -743,7 +743,7 @@ test "zalgebra.Mat4.decompose" {
 
     try expectEqual(result.t, Vec3.new(10, 5, 5));
     try expectEqual(result.s, Vec3.set(1));
-    try expectEqual(result.r.extractEulerAngles(), Vec3.new(45, 5, 0.00000010712935250012379));
+    try expectEqual(result.r.extractEulerAngles(), Vec3.new(7.853981e-1, 8.726646e-2, 1.86976e-9));
 }
 
 test "zalgebra.Mat4.cast" {
