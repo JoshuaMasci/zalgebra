@@ -19,10 +19,6 @@ pub const Mat3_f64 = Mat3x3(f64);
 /// A column-major 3x3 matrix
 /// Note: Column-major means accessing data like m.data[COLUMN][ROW].
 pub fn Mat3x3(comptime T: type) type {
-    if (@typeInfo(T) != .Float) {
-        @compileError("Mat3x3 not implemented for " ++ @typeName(T));
-    }
-
     const Vector3 = GenericVector(3, T);
 
     return extern struct {
@@ -81,9 +77,8 @@ pub fn Mat3x3(comptime T: type) type {
             return result;
         }
 
-        /// Return a pointer to the inner data of the matrix.
-        pub fn getData(self: *const Self) *const T {
-            return @ptrCast(&self.data);
+        pub fn getSlice(self: *const Self) *const [3][3]T {
+            return self.data[0..3];
         }
 
         /// Return true if two matrices are equals.
@@ -145,6 +140,10 @@ pub fn Mat3x3(comptime T: type) type {
 
         /// Ortho normalize given matrix.
         pub fn orthoNormalize(self: Self) Self {
+            if (@typeInfo(T) != .float) {
+                @compileError("Mat3x3.orthoNormalize() not implemented for " ++ @typeName(T));
+            }
+
             const column_1 = Vector3.new(self.data[0][0], self.data[0][1], self.data[0][2]).norm();
             const column_2 = Vector3.new(self.data[1][0], self.data[1][1], self.data[1][2]).norm();
             const column_3 = Vector3.new(self.data[2][0], self.data[2][1], self.data[2][2]).norm();
@@ -170,6 +169,10 @@ pub fn Mat3x3(comptime T: type) type {
         /// Taken from Mike Day at Insomniac Games (and `glm` as the same function).
         /// For more details: https://d3cw3dd2w32x2b.cloudfront.net/wp-content/uploads/2012/07/euler-angles1.pdf
         pub fn extractEulerAngles(self: Self) Vector3 {
+            if (@typeInfo(T) != .float) {
+                @compileError("Mat3x3.extractEulerAngles() not implemented for " ++ @typeName(T));
+            }
+
             const m = self.orthoNormalize();
 
             const theta_x = math.atan2(m.data[1][2], m.data[2][2]);
@@ -255,27 +258,22 @@ pub fn Mat3x3(comptime T: type) type {
             return inv_mat;
         }
 
-        /// Print the 3x3 to stderr.
-        pub fn debugPrint(self: Self) void {
-            const print = std.debug.print;
+        pub fn format(
+            self: Self,
+            comptime fmt: []const u8,
+            options: std.fmt.FormatOptions,
+            writer: anytype,
+        ) !void {
+            _ = fmt;
+            _ = options;
 
-            print("({d}, {d}, {d})\n", .{
-                self.data[0][0],
-                self.data[1][0],
-                self.data[2][0],
-            });
-
-            print("({d}, {d}, {d})\n", .{
-                self.data[0][1],
-                self.data[1][1],
-                self.data[2][1],
-            });
-
-            print("({d}, {d}, {d})\n", .{
-                self.data[0][2],
-                self.data[1][2],
-                self.data[2][2],
-            });
+            for (0..3) |i| {
+                try writer.print("({d:.2}, {d:.2}, {d:.2})\n", .{
+                    self.data[0][i],
+                    self.data[1][i],
+                    self.data[2][i],
+                });
+            }
         }
 
         /// Cast a type to another type.
@@ -283,7 +281,7 @@ pub fn Mat3x3(comptime T: type) type {
         pub fn cast(self: Self, comptime dest_type: type) Mat3x3(dest_type) {
             const dest_info = @typeInfo(dest_type);
 
-            if (dest_info != .Float) {
+            if (dest_info != .float) {
                 std.debug.panic("Error, dest type should be float.\n", .{});
             }
 

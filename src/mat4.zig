@@ -19,7 +19,7 @@ pub const Mat4_f64 = Mat4x4(f64);
 /// A column-major 4x4 matrix
 /// Note: Column-major means accessing data like m.data[COLUMN][ROW].
 pub fn Mat4x4(comptime T: type) type {
-    if (@typeInfo(T) != .Float) {
+    if (@typeInfo(T) != .float) {
         @compileError("Mat4x4 not implemented for " ++ @typeName(T));
     }
 
@@ -84,9 +84,8 @@ pub fn Mat4x4(comptime T: type) type {
             return result;
         }
 
-        /// Return a pointer to the inner data of the matrix.
-        pub fn getData(self: *const Self) *const T {
-            return @ptrCast(&self.data);
+        pub fn getSlice(self: *const Self) *const [4][4]T {
+            return self.data[0..4];
         }
 
         /// Return true if two matrices are equals.
@@ -486,37 +485,23 @@ pub fn Mat4x4(comptime T: type) type {
             };
         }
 
-        /// Print the 4x4 to stderr.
-        pub fn debugPrint(self: Self) void {
-            const print = std.debug.print;
+        pub fn format(
+            self: Self,
+            comptime fmt: []const u8,
+            options: std.fmt.FormatOptions,
+            writer: anytype,
+        ) !void {
+            _ = fmt;
+            _ = options;
 
-            print("({d}, {d}, {d}, {d})\n", .{
-                self.data[0][0],
-                self.data[1][0],
-                self.data[2][0],
-                self.data[3][0],
-            });
-
-            print("({d}, {d}, {d}, {d})\n", .{
-                self.data[0][1],
-                self.data[1][1],
-                self.data[2][1],
-                self.data[3][1],
-            });
-
-            print("({d}, {d}, {d}, {d})\n", .{
-                self.data[0][2],
-                self.data[1][2],
-                self.data[2][2],
-                self.data[3][2],
-            });
-
-            print("({d}, {d}, {d}, {d})\n", .{
-                self.data[0][3],
-                self.data[1][3],
-                self.data[2][3],
-                self.data[3][3],
-            });
+            for (0..4) |i| {
+                try writer.print("({d:.2}, {d:.2}, {d:.2}, {d:.2})\n", .{
+                    self.data[0][i],
+                    self.data[1][i],
+                    self.data[2][i],
+                    self.data[3][i],
+                });
+            }
         }
 
         /// Cast a type to another type.
@@ -524,7 +509,7 @@ pub fn Mat4x4(comptime T: type) type {
         pub fn cast(self: Self, comptime dest_type: type) Mat4x4(dest_type) {
             const dest_info = @typeInfo(dest_type);
 
-            if (dest_info != .Float) {
+            if (dest_info != .float) {
                 std.debug.panic("Error, dest type should be float.\n", .{});
             }
 

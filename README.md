@@ -6,7 +6,7 @@ The goal is to become as complete and useful as the Unity one. I'm currently usi
 
 If you would like to contribute, don't hesitate! :)
 
-Note: **Zig 0.13.x is required.**
+Note: **The main branch is for the latest Zig release (0.14.x), use [latest](https://github.com/kooparse/zalgebra/tree/latest) for latest master changements**
 
 ## Examples
 
@@ -23,7 +23,7 @@ pub fn main () void {
   const model = Mat4.fromTranslate(Vec3.new(0.2, 0.5, 0.0));
 
   const mvp = Mat4.mul(projection, view.mul(model));
-  mvp.debugPrint();
+  std.debug.format("{}", .{mvp});
 }
 ```
 
@@ -73,11 +73,13 @@ pub fn main () void {
 | getAngle  | Return angle in degrees between two vectors (only for vec2 and vec3)       |
 | rotate    | Rotate vector by angle (in degrees)                                        |
 | length    | Return the magnitude of the current vector                                 |
+| lengthSq  | Return the magnitude squared of the current vector                         |
 | distance  | Return the distance between two points                                     |
 | norm      | Construct a new normalized vector based on the given one                   |
 | eql       | Return `true` if two vectors are equals                                    |
 | sub       | Construct new vector resulting from the substraction between two vectors   |
 | add       | Construct new vector resulting from the addition between two vectors       |
+| div       | Construct new vector resulting from the division between two vectors       |
 | mul       | Construct new vector resulting from the multiplication between two vectors |
 | scale     | Construct new vector after multiplying each components by a given scalar   |
 | cross     | Construct the cross product (as vector) from two vectors (only for vec3)   |
@@ -90,32 +92,36 @@ pub fn main () void {
 
 Note: All matrices are column-major.
 
-| Methods            | Description                                                                           |
-| ------------------ | ------------------------------------------------------------------------------------- |
-| set                | Set all matrix values to given value                                                  |
-| fromSlice          | Construct new matrix from given slice of data                                         |
-| getData            | Return a pointer to the inner data                                                    |
-| transpose          | Return the transpose matrix                                                           |
-| negate             | Scale all components by -1                                                            |
-| cast               | Cast a type to another type                                                           |
-| eql                | Return `true` if two matrices are equals                                              |
-| mulByVec4          | Multiply a given vec4 by matrix (only for mat4)                                       |
-| fromTranslate      | Construct a translation matrix                                                        |
-| translate          | Construct a translation from the given matrix according to given axis (vec3)          |
-| fromRotation       | Construct a rotation matrix                                                           |
-| fromEulerAngles    | Construct a rotation matrix from pitch/yaw/roll in degrees (X _ Y _ Z)                |
-| rotate             | Construct a rotation from the given matrix according to given axis (vec3)             |
-| fromScale          | Construct a scale matrix                                                              |
-| scale              | Construct a scale from the given matrix according to given axis (vec3)                |
-| extractTranslation | Return a vector with proper translation                                               |
-| orthoNormalize     | Ortho normalize the given matrix.                                                     |
-| extractEulerAngles | Return a vector with Euler angles in degrees (pitch/yaw/roll)                         |
-| extractScale       | Return a vector with proper scale                                                     |
-| mul                | Multiply two matrices                                                                 |
-| inv                | Inverse the given matrix                                                              |
-| recompose          | Return mat4 matrix from given `translation`, `rotation` and `scale` components        |
-| decompose          | Return components `translation`, `rotation` and `scale` from given 4x4 matrix.        |
-| debugPrint         | Print the matrix data for debug purpose                                               |
+| Methods              | Description                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| identity             | Construct an identity matrix                                                          |
+| set                  | Set all matrix values to given value                                                  |
+| fromSlice            | Construct new matrix from given slice of data                                         |
+| getSlice             | Return the inner data as a slice                                                      |
+| transpose            | Return the transpose matrix                                                           |
+| negate               | Scale all components by -1                                                            |
+| cast                 | Cast a type to another type                                                           |
+| eql                  | Return `true` if two matrices are equals                                              |
+| mulByVec4            | Multiply a given vec4 by matrix (only for mat4)                                       |
+| fromTranslate        | Construct a translation matrix                                                        |
+| translate            | Construct a translation from the given matrix according to given axis (vec3)          |
+| fromRotation         | Construct a rotation matrix                                                           |
+| fromEulerAngles      | Construct a rotation matrix from pitch/yaw/roll in degrees (X _ Y _ Z)                |
+| rotate               | Construct a rotation from the given matrix according to given axis (vec3)             |
+| fromScale            | Construct a scale matrix                                                              |
+| scale                | Construct a scale from the given matrix according to given axis (vec3)                |
+| extractTranslation   | Return a vector with proper translation                                               |
+| orthoNormalize       | Ortho normalize the given matrix.                                                     |
+| extractEulerAngles   | Return a vector with Euler angles in degrees (pitch/yaw/roll)                         |
+| extractScale         | Return a vector with proper scale                                                     |
+| perspective          | Construct a perspective matrix from given fovy, aspect ratio, near/far inputs         |
+| perspectiveReversedZ | Construct a perspective matrix with reverse Z and infinite far plane.                 |
+| orthographic         | Construct an orthographic matrix from given left, right, bottom, top, near/far inputs |
+| lookAt               | Construct a right-handed lookAt matrix from given position (eye) and target           |
+| mul                  | Multiply two matrices                                                                 |
+| inv                  | Inverse the given matrix                                                              |
+| recompose            | Return mat4 matrix from given `translation`, `rotation` and `scale` components        |
+| decompose            | Return components `translation`, `rotation` and `scale` from given 4x4 matrix.        |
 
 ### Quaternions
 
@@ -135,7 +141,7 @@ Note: All matrices are column-major.
 | mul               | Construct quaternion resulting from the multiplication of two given ones                       |
 | scale             | Construct new quaternion resulting from the multiplication of all components by a given scalar |
 | dot               | Return the dot product between two quaternions                                                 |
-| toArray           | Return an array of [w,x,y,z]                                                                   |
+| toMat3            | Convert given quat to rotation 3x3 matrix                                                      |
 | toMat4            | Convert given quat to rotation 4x4 matrix                                                      |
 | fromEulerAngles   | Construct quaternion from Euler angles                                                         |
 | fromAxis          | Construct quat from angle around specified axis                                                |
